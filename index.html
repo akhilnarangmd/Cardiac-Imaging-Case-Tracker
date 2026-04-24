@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cardiac Imaging">
+<meta name="theme-color" content="#0C447C">
+<title>Cardiac Imaging Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root {
+  --blue-900:#042C53;--blue-800:#0C447C;--blue-700:#185FA5;--blue-500:#378ADD;
+  --blue-200:#B5D4F4;--blue-50:#E6F1FB;
+  --teal-700:#0F6E56;--teal-500:#1D9E75;--teal-50:#E1F5EE;
+  --red-600:#A32D2D;--red-400:#E24B4A;--red-50:#FCEBEB;
+  --amber-700:#633806;--amber-600:#854F0B;--amber-200:#FAC775;--amber-50:#FAEEDA;
+  --gray-900:#1a1a1a;--gray-700:#3a3a3a;--gray-500:#6b6b6b;
+  --gray-300:#c4c4c4;--gray-100:#f2f2f2;--gray-50:#f8f8f8;--white:#ffffff;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+  --font:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;
+  --font-d:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:var(--gray-900);overscroll-behavior:none;}
+
+/* LOGIN */
+#login-screen{min-height:100vh;background:var(--blue-900);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px calc(var(--safe-bottom)+32px);}
+.login-logo{width:72px;height:72px;background:rgba(255,255,255,0.12);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:18px;}
+.login-title{font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--white);margin-bottom:4px;letter-spacing:-0.3px;text-align:center;}
+.login-sub{font-size:13px;color:var(--blue-200);margin-bottom:32px;text-align:center;}
+.login-card{background:var(--white);border-radius:20px;padding:22px 20px;width:100%;max-width:360px;margin-bottom:16px;}
+.login-lbl{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-500);margin-bottom:6px;margin-top:14px;}
+.login-lbl:first-child{margin-top:0;}
+.login-input{width:100%;padding:13px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:16px;font-family:var(--font);color:var(--gray-900);background:var(--gray-50);outline:none;transition:border-color 0.15s;}
+.login-input:focus{border-color:var(--blue-500);background:var(--white);}
+.login-btn{width:100%;padding:15px;background:var(--blue-700);color:var(--white);border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:18px;transition:background 0.15s,transform 0.1s;}
+.login-btn:active{background:var(--blue-800);transform:scale(0.98);}
+.login-btn:disabled{background:var(--gray-300);cursor:not-allowed;}
+.login-error{background:var(--red-50);border:1px solid #f7c1c1;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red-600);margin-top:12px;text-align:center;display:none;}
+.lockout-msg{background:var(--amber-50);border:1px solid var(--amber-200);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--amber-600);margin-top:12px;text-align:center;display:none;}
+.login-notice{font-size:11px;color:rgba(255,255,255,0.35);text-align:center;max-width:300px;line-height:1.65;}
+
+/* APP */
+#app{display:none;max-width:430px;margin:0 auto;min-height:100vh;flex-direction:column;background:var(--gray-100);}
+#app.visible{display:flex;flex-direction:column;}
+.header{background:var(--blue-800);padding:calc(var(--safe-top)+14px) 16px 14px;position:sticky;top:0;z-index:100;}
+.header-inner{display:flex;align-items:flex-end;justify-content:space-between;}
+.hdr-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue-200);margin-bottom:2px;}
+.hdr-title{font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--white);letter-spacing:-0.3px;}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.hdr-user{font-size:12px;color:var(--blue-200);}
+.hdr-actions{display:flex;gap:6px;}
+.hdr-btn{background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--white);cursor:pointer;letter-spacing:0.04em;}
+.hdr-btn:active{background:rgba(255,255,255,0.28);}
+.session-bar{background:var(--amber-50);border-bottom:1px solid var(--amber-200);padding:8px 16px;font-size:12px;color:var(--amber-600);text-align:center;font-weight:600;display:none;cursor:pointer;}
+.tab-bar{display:flex;background:var(--white);border-bottom:1px solid #e0e0e0;position:sticky;top:calc(var(--safe-top)+68px);z-index:99;}
+.tab{flex:1;padding:12px 0 11px;text-align:center;font-size:12px;font-weight:600;color:var(--gray-500);cursor:pointer;border-bottom:2.5px solid transparent;transition:color 0.15s,border-color 0.15s;user-select:none;}
+.tab.active{color:var(--blue-700);border-bottom-color:var(--blue-700);}
+.panel{display:none;}.panel.active{display:block;}
+
+/* FORM */
+.form-wrap{padding:16px 14px 100px;}
+.section-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-500);margin-bottom:8px;padding-left:4px;}
+.card{background:var(--white);border-radius:14px;overflow:hidden;margin-bottom:16px;border:1px solid rgba(0,0,0,0.06);}
+.field-row{display:flex;align-items:center;padding:0 16px;min-height:50px;border-bottom:1px solid var(--gray-100);}
+.field-row:last-child{border-bottom:none;}
+.field-lbl{font-size:14px;color:var(--gray-500);width:78px;flex-shrink:0;font-weight:500;}
+.field-row input[type="text"],.field-row input[type="date"]{flex:1;border:none;outline:none;background:transparent;font-size:15px;color:var(--gray-900);font-family:var(--font);padding:14px 0;-webkit-appearance:none;}
+.field-row input::placeholder{color:var(--gray-300);}
+.modalities-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.mod-chip{background:var(--white);border:1.5px solid #e0e0e0;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;user-select:none;}
+.mod-chip.selected{border-color:var(--blue-700);background:var(--blue-50);}
+.mod-chip-label{font-size:13px;font-weight:600;color:var(--gray-700);}
+.mod-chip.selected .mod-chip-label{color:var(--blue-700);}
+.mod-chip-sub{font-size:10px;color:var(--gray-500);margin-top:2px;}
+.mod-chip.selected .mod-chip-sub{color:var(--blue-500);}
+.checkbox-row{display:flex;align-items:center;padding:14px 16px;background:var(--white);border-radius:14px;margin-bottom:16px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;user-select:none;gap:12px;}
+.custom-checkbox{width:22px;height:22px;border-radius:6px;border:2px solid #c4c4c4;background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.custom-checkbox.checked{background:var(--teal-500);border-color:var(--teal-500);}
+.custom-checkbox.checked::after{content:'';width:12px;height:7px;border-left:2.5px solid white;border-bottom:2.5px solid white;transform:rotate(-45deg) translateY(-1px);display:block;}
+.checkbox-text{font-size:15px;font-weight:500;color:var(--gray-900);}
+.checkbox-sub{font-size:12px;color:var(--gray-500);margin-top:1px;}
+.notes-card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:16px;border:1px solid rgba(0,0,0,0.06);}
+.notes-card textarea{width:100%;border:none;outline:none;background:transparent;font-size:15px;line-height:1.6;color:var(--gray-900);font-family:var(--font);resize:none;min-height:100px;}
+.notes-card textarea::placeholder{color:var(--gray-300);}
+.save-btn{position:fixed;bottom:calc(var(--safe-bottom)+16px);left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:402px;padding:16px;background:var(--blue-700);color:var(--white);border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;transition:background 0.15s,transform 0.1s;z-index:200;}
+.save-btn:active{background:var(--blue-800);transform:translateX(-50%) scale(0.98);}
+
+/* RECORDS */
+.records-wrap{padding:12px 14px 40px;}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;}
+.toolbar-btn{background:var(--white);border:1px solid #e0e0e0;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--gray-700);cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+.toolbar-btn.active{background:var(--blue-700);border-color:var(--blue-700);color:var(--white);}
+.toolbar-spacer{flex:1;}
+.csv-btn{background:var(--teal-500);border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--white);cursor:pointer;}
+.csv-btn:active{background:var(--teal-700);}
+.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-chip{background:var(--white);border:1.5px solid #e0e0e0;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-500);cursor:pointer;white-space:nowrap;transition:all 0.15s;flex-shrink:0;}
+.filter-chip.active{background:var(--blue-50);border-color:var(--blue-700);color:var(--blue-700);}
+.study-card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1px solid rgba(0,0,0,0.06);}
+.study-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.study-name{font-size:16px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px;}
+.study-del{background:none;border:none;font-size:20px;color:var(--gray-300);cursor:pointer;padding:0 0 0 8px;line-height:1;}
+.study-meta-row{display:flex;gap:12px;font-size:12px;color:var(--gray-500);margin-bottom:8px;flex-wrap:wrap;}
+.study-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.02em;}
+.pill-mod{background:var(--blue-50);color:var(--blue-700);}
+.pill-conf{background:var(--teal-50);color:var(--teal-700);}
+.study-notes-text{font-size:13px;color:var(--gray-500);line-height:1.55;border-top:1px solid var(--gray-100);padding-top:8px;}
+.study-addedby{font-size:11px;color:var(--gray-300);margin-top:6px;border-top:1px solid var(--gray-100);padding-top:6px;}
+.empty-state{text-align:center;padding:60px 24px;color:var(--gray-500);}
+.empty-big{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:16px;font-weight:700;color:var(--gray-700);margin-bottom:4px;}
+.empty-sub{font-size:13px;}
+
+/* ADMIN */
+.admin-wrap{padding:16px 14px 60px;}
+.hipaa-notice{background:var(--amber-50);border:1px solid var(--amber-200);border-radius:12px;padding:14px 16px;margin-bottom:20px;}
+.hipaa-title{font-size:13px;font-weight:700;color:var(--amber-700);margin-bottom:4px;}
+.hipaa-text{font-size:12px;color:var(--amber-600);line-height:1.6;}
+.adm-section{margin-bottom:24px;}
+.adm-section-title{font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:10px;padding-left:4px;}
+.user-list-card{background:var(--white);border-radius:12px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;margin-bottom:10px;}
+.user-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--gray-100);}
+.user-row:last-child{border-bottom:none;}
+.user-name{font-size:15px;font-weight:600;flex:1;}
+.user-role-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-right:10px;}
+.role-admin{background:var(--blue-50);color:var(--blue-700);}
+.role-user{background:var(--gray-100);color:var(--gray-500);}
+.user-del-btn{background:none;border:none;font-size:18px;color:var(--gray-300);cursor:pointer;}
+.form-box{background:var(--white);border-radius:14px;border:1px solid rgba(0,0,0,0.06);padding:16px;}
+.form-box input{width:100%;padding:11px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:15px;font-family:var(--font);color:var(--gray-900);outline:none;margin-bottom:10px;background:var(--gray-50);}
+.form-box input:focus{border-color:var(--blue-500);}
+.role-pick{display:flex;gap:8px;margin-bottom:12px;}
+.role-opt{flex:1;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;text-align:center;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;}
+.role-opt.selected{border-color:var(--blue-700);background:var(--blue-50);color:var(--blue-700);}
+.form-btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;color:var(--white);}
+.btn-blue{background:var(--blue-700);}
+.btn-teal{background:var(--teal-500);}
+.audit-box{background:var(--white);border-radius:12px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;}
+.audit-row{padding:10px 16px;border-bottom:1px solid var(--gray-100);font-size:12px;color:var(--gray-700);}
+.audit-row:last-child{border-bottom:none;}
+.audit-time{color:var(--gray-300);font-size:11px;margin-top:2px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--safe-bottom)+100px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--gray-900);color:var(--white);padding:10px 22px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.25s,transform 0.25s;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">🫀</div>
+  <div class="login-title">Cardiac Imaging Tracker</div>
+  <div class="login-sub">Authorized personnel only</div>
+  <div class="login-card">
+    <div class="login-lbl">Username</div>
+    <input class="login-input" type="text" id="login-user" placeholder="Enter username" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false">
+    <div class="login-lbl">Password</div>
+    <input class="login-input" type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="lockout-msg" id="lockout-msg"></div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+  </div>
+  <div class="login-notice">This application may contain protected health information (PHI).<br>Unauthorized access is prohibited and monitored.</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <div class="hdr-eyebrow">Cardiology</div>
+        <div class="hdr-title">Imaging Tracker</div>
+      </div>
+      <div class="hdr-right">
+        <div class="hdr-user" id="hdr-user"></div>
+        <div class="hdr-actions">
+          <button class="hdr-btn" onclick="doLogout()">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="session-bar" id="session-bar" onclick="extendSession()">⚠ Session expiring soon — tap to stay signed in</div>
+
+  <div class="tab-bar" id="tab-bar">
+    <div class="tab active" onclick="switchTab('entry')">New Study</div>
+    <div class="tab" onclick="switchTab('records')">Records</div>
+    <div class="tab" id="admin-tab" style="display:none" onclick="switchTab('admin')">Admin</div>
+  </div>
+
+  <!-- ENTRY -->
+  <div id="entry-panel" class="panel active">
+    <div class="form-wrap">
+      <div class="section-title">Patient Information</div>
+      <div class="card">
+        <div class="field-row"><div class="field-lbl">Name</div><input type="text" id="pt-name" placeholder="Full name" autocomplete="off" autocorrect="off"></div>
+        <div class="field-row"><div class="field-lbl">MRN</div><input type="text" id="pt-mrn" placeholder="Medical record number" autocomplete="off" inputmode="numeric"></div>
+        <div class="field-row"><div class="field-lbl">DOB</div><input type="date" id="pt-dob"></div>
+        <div class="field-row"><div class="field-lbl">Study Date</div><input type="date" id="study-date"></div>
+      </div>
+
+      <div class="section-title">Imaging Modality — select all that apply</div>
+      <div class="modalities-grid">
+        <div class="mod-chip" data-mod="Echo" onclick="toggleMod(this)"><div class="mod-chip-label">Echo</div><div class="mod-chip-sub">Echocardiography</div></div>
+        <div class="mod-chip" data-mod="CT" onclick="toggleMod(this)"><div class="mod-chip-label">CT</div><div class="mod-chip-sub">Cardiac CT</div></div>
+        <div class="mod-chip" data-mod="MRI" onclick="toggleMod(this)"><div class="mod-chip-label">MRI</div><div class="mod-chip-sub">Cardiac MRI</div></div>
+        <div class="mod-chip" data-mod="Nuclear" onclick="toggleMod(this)"><div class="mod-chip-label">Nuclear</div><div class="mod-chip-sub">Nuclear imaging</div></div>
+        <div class="mod-chip" data-mod="PET" onclick="toggleMod(this)"><div class="mod-chip-label">PET</div><div class="mod-chip-sub">PET scan</div></div>
+        <div class="mod-chip" data-mod="Cath" onclick="toggleMod(this)"><div class="mod-chip-label">Cath</div><div class="mod-chip-sub">Catheterization</div></div>
+      </div>
+
+      <div class="section-title">Conference</div>
+      <div class="checkbox-row" onclick="toggleConference()">
+        <div class="custom-checkbox" id="conf-box"></div>
+        <div><div class="checkbox-text">Presented in Conference</div><div class="checkbox-sub">Mark if case was discussed at conference</div></div>
+      </div>
+
+      <div class="section-title">Clinical Summary</div>
+      <div class="notes-card"><textarea id="study-notes" placeholder="Enter key findings, impressions, or clinical notes…" rows="4"></textarea></div>
+    </div>
+    <button class="save-btn" onclick="saveStudy()">Save Study</button>
+  </div>
+
+  <!-- RECORDS -->
+  <div id="records-panel" class="panel">
+    <div class="records-wrap">
+      <div class="toolbar">
+        <button class="toolbar-btn active" id="sort-date" onclick="setSort('date')">Newest</button>
+        <button class="toolbar-btn" id="sort-name" onclick="setSort('name')">A–Z</button>
+        <button class="toolbar-btn" id="sort-conf" onclick="setSort('conf')">Conference</button>
+        <div class="toolbar-spacer"></div>
+        <button class="csv-btn" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div class="filter-row">
+        <div class="filter-chip active" onclick="setFilter(this,'All')">All</div>
+        <div class="filter-chip" onclick="setFilter(this,'Echo')">Echo</div>
+        <div class="filter-chip" onclick="setFilter(this,'CT')">CT</div>
+        <div class="filter-chip" onclick="setFilter(this,'MRI')">MRI</div>
+        <div class="filter-chip" onclick="setFilter(this,'Nuclear')">Nuclear</div>
+        <div class="filter-chip" onclick="setFilter(this,'PET')">PET</div>
+        <div class="filter-chip" onclick="setFilter(this,'Cath')">Cath</div>
+        <div class="filter-chip" onclick="setFilter(this,'Conference')">Conference</div>
+      </div>
+      <div id="study-list"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="admin-panel" class="panel">
+    <div class="admin-wrap">
+      <div class="hipaa-notice">
+        <div class="hipaa-title">HIPAA Access Controls</div>
+        <div class="hipaa-text">Each authorized user must have their own unique credentials. Do not share passwords. All login activity is logged. Default admin login is <strong>admin / Admin1234!</strong> — change it immediately.</div>
+      </div>
+
+      <div class="adm-section">
+        <div class="adm-section-title">Authorized Users</div>
+        <div id="user-list" class="user-list-card"></div>
+      </div>
+
+      <div class="adm-section">
+        <div class="adm-section-title">Add New User</div>
+        <div class="form-box">
+          <input type="text" id="new-uname" placeholder="Username" autocorrect="off" autocapitalize="none">
+          <input type="password" id="new-pw" placeholder="Password (min 8 characters)">
+          <div class="role-pick">
+            <div class="role-opt selected" id="role-user-opt" onclick="pickRole('user')">User</div>
+            <div class="role-opt" id="role-admin-opt" onclick="pickRole('admin')">Admin</div>
+          </div>
+          <button class="form-btn btn-blue" onclick="addUser()">Add User</button>
+        </div>
+      </div>
+
+      <div class="adm-section">
+        <div class="adm-section-title">Change My Password</div>
+        <div class="form-box">
+          <input type="password" id="cur-pw" placeholder="Current password">
+          <input type="password" id="new-pw2" placeholder="New password (min 8 characters)">
+          <input type="password" id="conf-pw" placeholder="Confirm new password">
+          <button class="form-btn btn-teal" onclick="changePw()">Update Password</button>
+        </div>
+      </div>
+
+      <div class="adm-section">
+        <div class="adm-section-title">Audit Log (recent 20 events)</div>
+        <div id="audit-log" class="audit-box"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──────────────────────────
+const SESSION_MS  = 15*60*1000;
+const WARN_MS     = 2*60*1000;
+const MAX_FAILS   = 5;
+const LOCKOUT_MS  = 15*60*1000;
+const USERS_KEY   = 'ct_users_v1';
+const STUDIES_KEY = 'ct_studies_v1';
+const AUDIT_KEY   = 'ct_audit_v1';
+const LOCK_KEY    = 'ct_lock_v1';
+
+// ── CRYPTO ─────────────────────────────
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cit_2024_' + pw));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── STORAGE ────────────────────────────
+const getUsers   = () => { try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]');}catch(e){return[];} };
+const saveUsers  = u  => localStorage.setItem(USERS_KEY, JSON.stringify(u));
+const getStudies = () => { try{return JSON.parse(localStorage.getItem(STUDIES_KEY)||'[]');}catch(e){return[];} };
+const saveStudies= s  => localStorage.setItem(STUDIES_KEY, JSON.stringify(s));
+const getAudit   = () => { try{return JSON.parse(localStorage.getItem(AUDIT_KEY)||'[]');}catch(e){return[];} };
+const getLock    = () => { try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'{"a":0,"u":0}');}catch(e){return{a:0,u:0};} };
+const saveLock   = o  => localStorage.setItem(LOCK_KEY, JSON.stringify(o));
+
+function logAudit(ev, user) {
+  const log = getAudit();
+  log.unshift({ev, user, ts: new Date().toISOString()});
+  if (log.length > 100) log.length = 100;
+  localStorage.setItem(AUDIT_KEY, JSON.stringify(log));
+}
+
+// ── LOCKOUT ────────────────────────────
+function lockedUntil() {
+  const l = getLock();
+  return (l.u && Date.now() < l.u) ? l.u : 0;
+}
+function recordFail() {
+  const l = getLock();
+  l.a = (l.a||0)+1;
+  if (l.a >= MAX_FAILS) { l.u = Date.now() + LOCKOUT_MS; l.a = 0; }
+  saveLock(l);
+}
+function clearLock() { saveLock({a:0,u:0}); }
+
+// ── STATE ──────────────────────────────
+let me = null, sessionT = null, warnT = null;
+let studies = [], sortMode = 'date', filterMode = 'All';
+let confChecked = false, selectedMods = new Set(), newRole = 'user';
+
+// ── BOOTSTRAP ──────────────────────────
+async function bootstrap() {
+  if (!getUsers().length) {
+    const h = await hashPw('Admin1234!');
+    saveUsers([{username:'admin', hash:h, role:'admin', created:new Date().toISOString()}]);
+    logAudit('System initialized', 'system');
+  }
+}
+
+// ── LOGIN ──────────────────────────────
+async function doLogin() {
+  const lu = lockedUntil();
+  if (lu) { showLock(lu); return; }
+
+  const uname = document.getElementById('login-user').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const btn   = document.getElementById('login-btn');
+
+  if (!uname||!pass) { showErr('Please enter your username and password.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const h = await hashPw(pass);
+  const found = getUsers().find(u => u.username===uname && u.hash===h);
+
+  if (!found) {
+    recordFail();
+    const l = getLock();
+    if (l.u && Date.now()<l.u) { showLock(l.u); }
+    else {
+      const rem = MAX_FAILS - (l.a||0);
+      showErr(`Incorrect username or password. ${rem} attempt${rem!==1?'s':''} remaining.`);
+    }
+    logAudit(`Failed login: ${uname}`, uname);
+    btn.disabled=false; btn.textContent='Sign In';
+    return;
+  }
+
+  clearLock();
+  logAudit('Login', uname);
+  me = found;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('hdr-user').textContent = uname + (found.role==='admin'?' ★':'');
+  if (found.role==='admin') document.getElementById('admin-tab').style.display='flex';
+  studies = getStudies();
+  document.getElementById('study-date').value = today();
+  resetTimer();
+}
+
+function showErr(msg) {
+  const e=document.getElementById('login-error'); e.textContent=msg; e.style.display='block';
+}
+function showLock(until) {
+  const mins = Math.ceil((until-Date.now())/60000);
+  const e=document.getElementById('lockout-msg');
+  e.textContent=`Account locked after too many attempts. Try again in ${mins} min.`;
+  e.style.display='block';
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('login-btn').disabled=true;
+  setTimeout(()=>{e.style.display='none'; document.getElementById('login-btn').disabled=false;}, until-Date.now());
+}
+
+// ── SESSION ────────────────────────────
+function resetTimer() {
+  clearTimeout(sessionT); clearTimeout(warnT);
+  document.getElementById('session-bar').style.display='none';
+  warnT    = setTimeout(()=> document.getElementById('session-bar').style.display='block', SESSION_MS-WARN_MS);
+  sessionT = setTimeout(()=>{ logAudit('Session expired',me?.username); doLogout(true); }, SESSION_MS);
+}
+function extendSession() { resetTimer(); showToast('Session extended'); }
+['touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,()=>{if(me)resetTimer();},{passive:true}));
+
+function doLogout(expired) {
+  if (me) logAudit(expired?'Session expired':'Logout', me.username);
+  me=null; clearTimeout(sessionT); clearTimeout(warnT);
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('lockout-msg').style.display='none';
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-btn').textContent='Sign In';
+  document.getElementById('admin-tab').style.display='none';
+  document.getElementById('session-bar').style.display='none';
+  if (expired) setTimeout(()=>showToast('Signed out due to inactivity'),300);
+}
+
+// ── TABS ───────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const map={entry:0,records:1,admin:2};
+  document.querySelectorAll('.tab')[map[tab]].classList.add('active');
+  document.getElementById(tab+'-panel').classList.add('active');
+  if(tab==='records') renderRecords();
+  if(tab==='admin')   renderAdmin();
+}
+
+// ── FORM ───────────────────────────────
+function toggleMod(el){const m=el.dataset.mod;if(selectedMods.has(m)){selectedMods.delete(m);el.classList.remove('selected');}else{selectedMods.add(m);el.classList.add('selected');}}
+function toggleConference(){confChecked=!confChecked;document.getElementById('conf-box').classList.toggle('checked',confChecked);}
+
+function saveStudy() {
+  const name=document.getElementById('pt-name').value.trim();
+  const mrn =document.getElementById('pt-mrn').value.trim();
+  const dob =document.getElementById('pt-dob').value;
+  const date=document.getElementById('study-date').value;
+  const notes=document.getElementById('study-notes').value.trim();
+  if(!name){hl('pt-name','Name is required');return;}
+  if(!mrn) {hl('pt-mrn','MRN is required');return;}
+  studies.unshift({id:Date.now(),name,mrn,dob,date,notes,modalities:[...selectedMods],conference:confChecked,savedAt:new Date().toISOString(),addedBy:me.username});
+  saveStudies(studies);
+  logAudit(`Added: ${name} MRN ${mrn}`, me.username);
+  document.getElementById('pt-name').value='';
+  document.getElementById('pt-mrn').value='';
+  document.getElementById('pt-dob').value='';
+  document.getElementById('study-date').value=today();
+  document.getElementById('study-notes').value='';
+  selectedMods.clear(); confChecked=false;
+  document.getElementById('conf-box').classList.remove('checked');
+  document.querySelectorAll('.mod-chip.selected').forEach(c=>c.classList.remove('selected'));
+  showToast('Study saved');
+}
+function hl(id,msg){const el=document.getElementById(id);const orig=el.placeholder;el.style.color='#E24B4A';el.placeholder=msg;setTimeout(()=>{el.style.color='';el.placeholder=orig;},1800);el.focus();}
+
+// ── RECORDS ────────────────────────────
+function setSort(m){sortMode=m;document.querySelectorAll('.toolbar-btn').forEach(b=>b.classList.remove('active'));document.getElementById('sort-'+m).classList.add('active');renderRecords();}
+function setFilter(el,m){filterMode=m;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderRecords();}
+
+function filtered() {
+  let list=[...studies];
+  if(filterMode==='Conference') list=list.filter(s=>s.conference);
+  else if(filterMode!=='All') list=list.filter(s=>(s.modalities||[]).includes(filterMode));
+  if(sortMode==='date') list.sort((a,b)=>b.id-a.id);
+  else if(sortMode==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sortMode==='conf') list.sort((a,b)=>(b.conference?1:0)-(a.conference?1:0));
+  return list;
+}
+
+function renderRecords(){
+  const list=filtered(), el=document.getElementById('study-list');
+  if(!list.length){el.innerHTML=`<div class="empty-state"><div class="empty-big">📋</div><div class="empty-title">${filterMode!=='All'?'No matching studies':'No studies yet'}</div><div class="empty-sub">${filterMode!=='All'?'Try a different filter':'Add your first study on the New Study tab'}</div></div>`;return;}
+  el.innerHTML=list.map(s=>`
+    <div class="study-card">
+      <div class="study-header">
+        <div class="study-name">${esc(s.name)}</div>
+        ${(me?.role==='admin'||s.addedBy===me?.username)?`<button class="study-del" onclick="deleteStudy(${s.id})">×</button>`:''}
+      </div>
+      <div class="study-meta-row">
+        <span>MRN: ${esc(s.mrn)}</span>
+        ${s.dob?`<span>DOB: ${fd(s.dob)}</span>`:''}
+        ${s.date?`<span>Study: ${fd(s.date)}</span>`:''}
+      </div>
+      <div class="study-pills">
+        ${(s.modalities||[]).map(m=>`<span class="pill pill-mod">${m}</span>`).join('')}
+        ${s.conference?`<span class="pill pill-conf">Conference</span>`:''}
+      </div>
+      ${s.notes?`<div class="study-notes-text">${esc(s.notes)}</div>`:''}
+      <div class="study-addedby">Added by ${esc(s.addedBy||'—')} · ${s.savedAt?new Date(s.savedAt).toLocaleDateString():''}</div>
+    </div>`).join('');
+}
+
+function deleteStudy(id){
+  if(!confirm('Delete this study? This cannot be undone.')) return;
+  const s=studies.find(x=>x.id===id);
+  studies=studies.filter(x=>x.id!==id);
+  saveStudies(studies);
+  if(s) logAudit(`Deleted: ${s.name} MRN ${s.mrn}`,me.username);
+  renderRecords(); showToast('Study deleted');
+}
+
+function exportCSV(){
+  if(!studies.length){showToast('No studies to export');return;}
+  const hdr=['Name','MRN','DOB','Study Date','Modalities','Conference','Notes','Added By','Saved At'];
+  const rows=studies.map(s=>[s.name,s.mrn,s.dob||'',s.date||'',(s.modalities||[]).join('; '),s.conference?'Yes':'No',s.notes||'',s.addedBy||'',s.savedAt?new Date(s.savedAt).toLocaleString():'']);
+  const csv=[hdr,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='cardiac_imaging_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  logAudit('Exported CSV',me.username);
+  showToast('CSV exported');
+}
+
+// ── ADMIN ──────────────────────────────
+function pickRole(r){newRole=r;document.getElementById('role-user-opt').classList.toggle('selected',r==='user');document.getElementById('role-admin-opt').classList.toggle('selected',r==='admin');}
+
+async function addUser(){
+  const uname=document.getElementById('new-uname').value.trim();
+  const pw=document.getElementById('new-pw').value;
+  if(!uname){showToast('Enter a username');return;}
+  if(pw.length<8){showToast('Password must be at least 8 characters');return;}
+  const users=getUsers();
+  if(users.find(u=>u.username===uname)){showToast('Username already exists');return;}
+  const h=await hashPw(pw);
+  users.push({username:uname,hash:h,role:newRole,created:new Date().toISOString()});
+  saveUsers(users);
+  logAudit(`Added user "${uname}" (${newRole})`,me.username);
+  document.getElementById('new-uname').value='';
+  document.getElementById('new-pw').value='';
+  showToast(`User "${uname}" added`);
+  renderAdmin();
+}
+
+function deleteUser(uname){
+  if(uname===me.username){showToast("You can't remove your own account");return;}
+  if(!confirm(`Remove user "${uname}"?`))return;
+  saveUsers(getUsers().filter(u=>u.username!==uname));
+  logAudit(`Removed user "${uname}"`,me.username);
+  showToast(`User "${uname}" removed`);
+  renderAdmin();
+}
+
+async function changePw(){
+  const cur=document.getElementById('cur-pw').value;
+  const nw=document.getElementById('new-pw2').value;
+  const cf=document.getElementById('conf-pw').value;
+  if(nw.length<8){showToast('New password must be at least 8 characters');return;}
+  if(nw!==cf){showToast('Passwords do not match');return;}
+  const ch=await hashPw(cur);
+  const users=getUsers(), myRec=users.find(u=>u.username===me.username);
+  if(!myRec||myRec.hash!==ch){showToast('Current password is incorrect');return;}
+  myRec.hash=await hashPw(nw);
+  saveUsers(users);
+  logAudit('Password changed',me.username);
+  document.getElementById('cur-pw').value='';
+  document.getElementById('new-pw2').value='';
+  document.getElementById('conf-pw').value='';
+  showToast('Password updated');
+}
+
+function renderAdmin(){
+  const users=getUsers();
+  document.getElementById('user-list').innerHTML=users.map(u=>`
+    <div class="user-row">
+      <div class="user-name">${esc(u.username)}</div>
+      <span class="user-role-badge ${u.role==='admin'?'role-admin':'role-user'}">${u.role}</span>
+      ${u.username!==me.username?`<button class="user-del-btn" onclick="deleteUser('${esc(u.username)}')">×</button>`:'<span style="width:24px"></span>'}
+    </div>`).join('');
+  const audit=getAudit();
+  document.getElementById('audit-log').innerHTML=audit.slice(0,20).map(a=>`
+    <div class="audit-row">${esc(a.ev)} <span style="color:var(--gray-500)">(${esc(a.user)})</span>
+    <div class="audit-time">${new Date(a.ts).toLocaleString()}</div></div>`).join('')||'<div class="audit-row">No events yet</div>';
+}
+
+// ── UTILS ──────────────────────────────
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function fd(d){if(!d)return'';const[y,m,day]=d.split('-');return m+'/'+day+'/'+y;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function today(){return new Date().toISOString().split('T')[0];}
+
+bootstrap();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
