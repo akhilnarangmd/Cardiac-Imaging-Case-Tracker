@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Cardiac Imaging">
 <meta name="theme-color" content="#0C447C">
 <title>Cardiac Imaging Tracker</title>
@@ -47,7 +47,7 @@ body{height:100%;background:var(--gray-100);font-family:var(--font);color:var(--
 /* APP */
 #app{display:none;max-width:430px;margin:0 auto;flex-direction:column;background:var(--gray-100);}
 #app.visible{display:flex;flex-direction:column;}
-.header{background:var(--blue-800);padding:calc(var(--safe-top)+16px) 16px 16px;position:sticky;top:0;z-index:100;}
+.header{background:var(--blue-800);padding:calc(env(safe-area-inset-top, 44px) + 12px) 16px 14px;position:sticky;top:0;z-index:100;}
 .header-inner{display:flex;align-items:flex-end;justify-content:space-between;}
 .hdr-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue-200);margin-bottom:2px;}
 .hdr-title{font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--white);letter-spacing:-0.3px;}
@@ -57,7 +57,7 @@ body{height:100%;background:var(--gray-100);font-family:var(--font);color:var(--
 .hdr-btn{background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--white);cursor:pointer;letter-spacing:0.04em;}
 .hdr-btn:active{background:rgba(255,255,255,0.28);}
 .session-bar{background:var(--amber-50);border-bottom:1px solid var(--amber-200);padding:8px 16px;font-size:12px;color:var(--amber-600);text-align:center;font-weight:600;display:none;cursor:pointer;}
-.tab-bar{display:flex;background:var(--white);border-bottom:1px solid #e0e0e0;position:sticky;top:calc(var(--safe-top)+72px);z-index:99;}
+.tab-bar{display:flex;background:var(--white);border-bottom:1px solid #e0e0e0;position:sticky;top:calc(env(safe-area-inset-top, 44px) + 78px);z-index:99;}
 .tab{flex:1;padding:12px 0 11px;text-align:center;font-size:12px;font-weight:600;color:var(--gray-500);cursor:pointer;border-bottom:2.5px solid transparent;transition:color 0.15s,border-color 0.15s;user-select:none;}
 .tab.active{color:var(--blue-700);border-bottom-color:var(--blue-700);}
 .panel{display:none;}.panel.active{display:block;}
@@ -168,6 +168,9 @@ body{height:100%;background:var(--gray-100);font-family:var(--font);color:var(--
     <div class="lockout-msg" id="lockout-msg"></div>
     <div class="login-error" id="login-error"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <button id="faceid-btn" onclick="doFaceID()" style="display:none;width:100%;margin-top:12px;padding:13px;background:rgba(255,255,255,0.12);color:white;border:1.5px solid rgba(255,255,255,0.25);border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);">
+      Face ID / Touch ID
+    </button>
     <div style="text-align:center;margin-top:14px;display:flex;justify-content:center;gap:20px;">
       <span onclick="showSignup()" style="font-size:13px;color:var(--blue-200);cursor:pointer;text-decoration:underline;">Create account</span>
       <span onclick="showForgot()" style="font-size:13px;color:var(--blue-200);cursor:pointer;text-decoration:underline;">Forgot password?</span>
@@ -731,7 +734,114 @@ function promptResetPw(uname){
   });
 }
 
+// ── FACE ID / BIOMETRICS ───────────────
+const BIOMETRIC_KEY = 'ct_biometric_v1';
+
+async function initFaceID() {
+  // Check if WebAuthn is supported
+  if (!window.PublicKeyCredential) return;
+  const stored = localStorage.getItem(BIOMETRIC_KEY);
+  if (stored) {
+    // Show Face ID button if user has registered biometrics
+    document.getElementById('faceid-btn').style.display = 'block';
+  }
+}
+
+async function doFaceID() {
+  const stored = localStorage.getItem(BIOMETRIC_KEY);
+  if (!stored) {
+    await registerFaceID();
+  } else {
+    await authenticateWithFaceID();
+  }
+}
+
+async function registerFaceID() {
+  if (!window.PublicKeyCredential) {
+    showToast('Face ID not supported on this device');
+    return;
+  }
+  // Need username to be filled in
+  const uname = document.getElementById('login-user').value.trim();
+  if (!uname) {
+    showErr('Enter your username first, then tap Face ID to register.');
+    return;
+  }
+  const users = getUsers();
+  const user = users.find(u => u.username === uname);
+  if (!user) {
+    showErr('Username not found.');
+    return;
+  }
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'Cardiac Imaging Tracker', id: location.hostname },
+        user: {
+          id: new TextEncoder().encode(uname),
+          name: uname,
+          displayName: uname
+        },
+        pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required'
+        },
+        timeout: 60000
+      }
+    });
+    // Store credential id linked to username
+    localStorage.setItem(BIOMETRIC_KEY, JSON.stringify({
+      credId: Array.from(new Uint8Array(credential.rawId)),
+      username: uname
+    }));
+    document.getElementById('faceid-btn').style.display = 'block';
+    showToast('Face ID registered! Tap it next time to sign in.');
+  } catch(e) {
+    showToast('Face ID setup cancelled or not available.');
+  }
+}
+
+async function authenticateWithFaceID() {
+  const stored = JSON.parse(localStorage.getItem(BIOMETRIC_KEY));
+  if (!stored) return;
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        rpId: location.hostname,
+        allowCredentials: [{
+          id: new Uint8Array(stored.credId),
+          type: 'public-key'
+        }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    // Biometric passed — log in as stored username
+    const users = getUsers();
+    const found = users.find(u => u.username === stored.username);
+    if (!found) { showToast('User no longer exists.'); return; }
+    clearLock();
+    logAudit('Login via Face ID', stored.username);
+    me = found;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('hdr-user').textContent = found.username + (found.role==='admin'?' ★':'');
+    if (found.role==='admin') document.getElementById('admin-tab').style.display='flex';
+    studies = getStudies();
+    document.getElementById('study-date').value = today();
+    resetTimer();
+  } catch(e) {
+    showToast('Face ID failed — please sign in with password.');
+  }
+}
+
 bootstrap();
+initFaceID();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/Cardiac-Imaging-Case-Tracker/sw.js', {scope: '/Cardiac-Imaging-Case-Tracker/'}).catch(()=>{});
 </script>
 </body>
