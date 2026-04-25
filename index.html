@@ -24,10 +24,11 @@
   --font-d:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:var(--gray-900);overscroll-behavior:none;}
+html{height:100%;background:var(--gray-100);}
+body{height:100%;background:var(--gray-100);font-family:var(--font);color:var(--gray-900);overscroll-behavior-y:none;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 
 /* LOGIN */
-#login-screen{min-height:100vh;background:var(--blue-900);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px calc(var(--safe-bottom)+32px);}
+#login-screen{min-height:100vh;background:var(--blue-900);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--safe-top)+32px) 24px calc(var(--safe-bottom)+32px);}
 .login-logo{width:72px;height:72px;background:rgba(255,255,255,0.12);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:18px;}
 .login-title{font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--white);margin-bottom:4px;letter-spacing:-0.3px;text-align:center;}
 .login-sub{font-size:13px;color:var(--blue-200);margin-bottom:32px;text-align:center;}
@@ -44,9 +45,9 @@ html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:v
 .login-notice{font-size:11px;color:rgba(255,255,255,0.35);text-align:center;max-width:300px;line-height:1.65;}
 
 /* APP */
-#app{display:none;max-width:430px;margin:0 auto;min-height:100vh;flex-direction:column;background:var(--gray-100);}
+#app{display:none;max-width:430px;margin:0 auto;flex-direction:column;background:var(--gray-100);}
 #app.visible{display:flex;flex-direction:column;}
-.header{background:var(--blue-800);padding:calc(var(--safe-top)+14px) 16px 14px;position:sticky;top:0;z-index:100;}
+.header{background:var(--blue-800);padding:calc(var(--safe-top)+16px) 16px 16px;position:sticky;top:0;z-index:100;}
 .header-inner{display:flex;align-items:flex-end;justify-content:space-between;}
 .hdr-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue-200);margin-bottom:2px;}
 .hdr-title{font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--white);letter-spacing:-0.3px;}
@@ -56,7 +57,7 @@ html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:v
 .hdr-btn{background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--white);cursor:pointer;letter-spacing:0.04em;}
 .hdr-btn:active{background:rgba(255,255,255,0.28);}
 .session-bar{background:var(--amber-50);border-bottom:1px solid var(--amber-200);padding:8px 16px;font-size:12px;color:var(--amber-600);text-align:center;font-weight:600;display:none;cursor:pointer;}
-.tab-bar{display:flex;background:var(--white);border-bottom:1px solid #e0e0e0;position:sticky;top:calc(var(--safe-top)+68px);z-index:99;}
+.tab-bar{display:flex;background:var(--white);border-bottom:1px solid #e0e0e0;position:sticky;top:calc(var(--safe-top)+72px);z-index:99;}
 .tab{flex:1;padding:12px 0 11px;text-align:center;font-size:12px;font-weight:600;color:var(--gray-500);cursor:pointer;border-bottom:2.5px solid transparent;transition:color 0.15s,border-color 0.15s;user-select:none;}
 .tab.active{color:var(--blue-700);border-bottom-color:var(--blue-700);}
 .panel{display:none;}.panel.active{display:block;}
@@ -347,6 +348,7 @@ const STUDIES_KEY = 'ct_studies_v1';
 const AUDIT_KEY   = 'ct_audit_v1';
 const LOCK_KEY    = 'ct_lock_v1';
 const INVITE_CODE = 'NM1234';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxQ0k53DbAQJ3_wgIwOi1Hm3AyE1NCO1W4OeJfVX5CJBdt3IPiChjNQYTxK0P8f5Gqs/exec';
 
 // ── CRYPTO ─────────────────────────────
 async function hashPw(pw) {
@@ -499,9 +501,13 @@ function saveStudy() {
   const notes=document.getElementById('study-notes').value.trim();
   if(!name){hl('pt-name','Name is required');return;}
   if(!mrn) {hl('pt-mrn','MRN is required');return;}
-  studies.unshift({id:Date.now(),name,mrn,dob,date,notes,modalities:[...selectedMods],conference:confChecked,savedAt:new Date().toISOString(),addedBy:me.username});
+
+  const study = {id:Date.now(),name,mrn,dob,date,notes,modalities:[...selectedMods],conference:confChecked,savedAt:new Date().toISOString(),addedBy:me.username};
+  studies.unshift(study);
   saveStudies(studies);
   logAudit(`Added: ${name} MRN ${mrn}`, me.username);
+
+  // Clear form
   document.getElementById('pt-name').value='';
   document.getElementById('pt-mrn').value='';
   document.getElementById('pt-dob').value='';
@@ -510,7 +516,30 @@ function saveStudy() {
   selectedMods.clear(); confChecked=false;
   document.getElementById('conf-box').classList.remove('checked');
   document.querySelectorAll('.mod-chip.selected').forEach(c=>c.classList.remove('selected'));
-  showToast('Study saved');
+
+  // Sync to Google Sheet
+  showToast('Saving…');
+  syncToSheet(study);
+}
+
+function syncToSheet(study) {
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      name:       study.name,
+      mrn:        study.mrn,
+      dob:        study.dob,
+      date:       study.date,
+      modalities: study.modalities,
+      conference: study.conference,
+      notes:      study.notes,
+      addedBy:    study.addedBy
+    })
+  })
+  .then(() => showToast('Study saved ✓ Synced to sheet'))
+  .catch(() => showToast('Study saved locally (sync failed — check connection)'));
 }
 function hl(id,msg){const el=document.getElementById(id);const orig=el.placeholder;el.style.color='#E24B4A';el.placeholder=msg;setTimeout(()=>{el.style.color='';el.placeholder=orig;},1800);el.focus();}
 
