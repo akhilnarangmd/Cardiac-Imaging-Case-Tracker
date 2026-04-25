@@ -1,4 +1,4 @@
-const CACHE = 'cardiac-v2';
+const CACHE = 'cardiac-v3';
 const BASE = '/Cardiac-Imaging-Case-Tracker';
 const FILES = [
   BASE + '/',
@@ -21,7 +21,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Always fetch fresh from network, fall back to cache
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
