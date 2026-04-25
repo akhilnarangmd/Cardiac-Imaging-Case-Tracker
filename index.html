@@ -131,6 +131,7 @@ html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:v
 .user-role-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-right:10px;}
 .role-admin{background:var(--blue-50);color:var(--blue-700);}
 .role-user{background:var(--gray-100);color:var(--gray-500);}
+.user-reset-btn{background:var(--amber-50);border:1px solid var(--amber-200);border-radius:7px;padding:4px 9px;font-size:11px;font-weight:700;color:var(--amber-700);cursor:pointer;margin-right:6px;}
 .user-del-btn{background:none;border:none;font-size:18px;color:var(--gray-300);cursor:pointer;}
 .form-box{background:var(--white);border-radius:14px;border:1px solid rgba(0,0,0,0.06);padding:16px;}
 .form-box input{width:100%;padding:11px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:15px;font-family:var(--font);color:var(--gray-900);outline:none;margin-bottom:10px;background:var(--gray-50);}
@@ -166,8 +167,43 @@ html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:v
     <div class="lockout-msg" id="lockout-msg"></div>
     <div class="login-error" id="login-error"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div style="text-align:center;margin-top:14px;display:flex;justify-content:center;gap:20px;">
+      <span onclick="showSignup()" style="font-size:13px;color:var(--blue-200);cursor:pointer;text-decoration:underline;">Create account</span>
+      <span onclick="showForgot()" style="font-size:13px;color:var(--blue-200);cursor:pointer;text-decoration:underline;">Forgot password?</span>
+    </div>
   </div>
   <div class="login-notice">This application may contain protected health information (PHI).<br>Unauthorized access is prohibited and monitored.</div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div id="forgot-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:white;border-radius:20px;padding:24px;width:100%;max-width:340px;">
+    <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:10px;">Forgot Password?</div>
+    <div style="font-size:14px;color:#6b6b6b;line-height:1.7;margin-bottom:20px;">
+      This app does not send automated password reset emails.<br><br>
+      To reset your password, contact your <strong>Admin</strong> — they can reset it from the <strong>Admin &rarr; Authorized Users</strong> panel by clicking <strong>Reset PW</strong> next to your name.
+    </div>
+    <button onclick="hideForgot()" style="width:100%;padding:13px;background:#185FA5;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">Got it</button>
+  </div>
+</div>
+
+<!-- SIGN UP MODAL -->
+<div id="signup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:white;border-radius:20px;padding:24px;width:100%;max-width:340px;">
+    <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px;">Create Account</div>
+    <div style="font-size:13px;color:#6b6b6b;margin-bottom:18px;">Enter the invite code shared by your admin, then choose your username and password.</div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px;">Invite Code</div>
+    <input class="login-input" type="text" id="su-code" placeholder="Enter invite code" autocorrect="off" autocapitalize="none" style="margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px;">Username</div>
+    <input class="login-input" type="text" id="su-user" placeholder="Choose a username" autocorrect="off" autocapitalize="none" style="margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px;">Password</div>
+    <input class="login-input" type="password" id="su-pw" placeholder="Min 8 characters" style="margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px;">Confirm Password</div>
+    <input class="login-input" type="password" id="su-pw2" placeholder="Confirm password" style="margin-bottom:4px;">
+    <div id="su-error" style="font-size:13px;color:#A32D2D;margin:8px 0;display:none;"></div>
+    <button onclick="doSignup()" style="width:100%;padding:13px;background:#185FA5;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;">Create Account</button>
+    <button onclick="hideSignup()" style="width:100%;padding:11px;background:none;border:none;color:#6b6b6b;font-size:14px;cursor:pointer;margin-top:8px;">Cancel</button>
+  </div>
 </div>
 
 <!-- MAIN APP -->
@@ -271,6 +307,7 @@ html,body{height:100%;background:var(--gray-100);font-family:var(--font);color:v
         <div class="form-box">
           <input type="text" id="new-uname" placeholder="Username" autocorrect="off" autocapitalize="none">
           <input type="password" id="new-pw" placeholder="Password (min 8 characters)">
+          <input type="password" id="new-pw-conf" placeholder="Confirm password">
           <div class="role-pick">
             <div class="role-opt selected" id="role-user-opt" onclick="pickRole('user')">User</div>
             <div class="role-opt" id="role-admin-opt" onclick="pickRole('admin')">Admin</div>
@@ -309,6 +346,7 @@ const USERS_KEY   = 'ct_users_v1';
 const STUDIES_KEY = 'ct_studies_v1';
 const AUDIT_KEY   = 'ct_audit_v1';
 const LOCK_KEY    = 'ct_lock_v1';
+const INVITE_CODE = 'NM1234';
 
 // ── CRYPTO ─────────────────────────────
 async function hashPw(pw) {
@@ -354,7 +392,7 @@ let confChecked = false, selectedMods = new Set(), newRole = 'user';
 async function bootstrap() {
   if (!getUsers().length) {
     const h = await hashPw('Admin1234!');
-    saveUsers([{username:'admin', hash:h, role:'admin', created:new Date().toISOString()}]);
+    saveUsers([{username:'akhil', hash:h, role:'admin', created:new Date().toISOString()}]);
     logAudit('System initialized', 'system');
   }
 }
@@ -541,8 +579,10 @@ function pickRole(r){newRole=r;document.getElementById('role-user-opt').classLis
 async function addUser(){
   const uname=document.getElementById('new-uname').value.trim();
   const pw=document.getElementById('new-pw').value;
+  const pwc=document.getElementById('new-pw-conf').value;
   if(!uname){showToast('Enter a username');return;}
   if(pw.length<8){showToast('Password must be at least 8 characters');return;}
+  if(pw!==pwc){showToast('Passwords do not match');return;}
   const users=getUsers();
   if(users.find(u=>u.username===uname)){showToast('Username already exists');return;}
   const h=await hashPw(pw);
@@ -551,6 +591,7 @@ async function addUser(){
   logAudit(`Added user "${uname}" (${newRole})`,me.username);
   document.getElementById('new-uname').value='';
   document.getElementById('new-pw').value='';
+  document.getElementById('new-pw-conf').value='';
   showToast(`User "${uname}" added`);
   renderAdmin();
 }
@@ -588,7 +629,7 @@ function renderAdmin(){
     <div class="user-row">
       <div class="user-name">${esc(u.username)}</div>
       <span class="user-role-badge ${u.role==='admin'?'role-admin':'role-user'}">${u.role}</span>
-      ${u.username!==me.username?`<button class="user-del-btn" onclick="deleteUser('${esc(u.username)}')">×</button>`:'<span style="width:24px"></span>'}
+      ${u.username!==me.username?`<button class="user-reset-btn" onclick="promptResetPw('${esc(u.username)}')">Reset PW</button><button class="user-del-btn" onclick="deleteUser('${esc(u.username)}')">×</button>`:'<span style="width:48px"></span>'}
     </div>`).join('');
   const audit=getAudit();
   document.getElementById('audit-log').innerHTML=audit.slice(0,20).map(a=>`
@@ -601,6 +642,65 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function fd(d){if(!d)return'';const[y,m,day]=d.split('-');return m+'/'+day+'/'+y;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function today(){return new Date().toISOString().split('T')[0];}
+
+// ── SIGN UP ────────────────────────────
+function showSignup(){
+  document.getElementById('su-code').value='';
+  document.getElementById('su-user').value='';
+  document.getElementById('su-pw').value='';
+  document.getElementById('su-pw2').value='';
+  document.getElementById('su-error').style.display='none';
+  document.getElementById('signup-modal').style.display='flex';
+}
+function hideSignup(){ document.getElementById('signup-modal').style.display='none'; }
+
+async function doSignup(){
+  const code  = document.getElementById('su-code').value.trim();
+  const uname = document.getElementById('su-user').value.trim();
+  const pw    = document.getElementById('su-pw').value;
+  const pw2   = document.getElementById('su-pw2').value;
+  const errEl = document.getElementById('su-error');
+
+  const showSuErr = msg => { errEl.textContent=msg; errEl.style.display='block'; };
+
+  if(code !== INVITE_CODE){ showSuErr('Invite code is incorrect.'); return; }
+  if(!uname){ showSuErr('Please choose a username.'); return; }
+  if(pw.length < 8){ showSuErr('Password must be at least 8 characters.'); return; }
+  if(pw !== pw2){ showSuErr('Passwords do not match.'); return; }
+
+  const users = getUsers();
+  if(users.find(u => u.username === uname)){ showSuErr('That username is already taken. Please choose another.'); return; }
+
+  const h = await hashPw(pw);
+  users.push({username:uname, hash:h, role:'user', created:new Date().toISOString()});
+  saveUsers(users);
+  logAudit(`Self-registered: "${uname}"`, uname);
+  hideSignup();
+  document.getElementById('login-user').value = uname;
+  showToast('Account created! You can now sign in.');
+}
+
+// ── FORGOT / RESET ─────────────────────
+function showForgot(){const m=document.getElementById('forgot-modal');m.style.display='flex';}
+function hideForgot(){const m=document.getElementById('forgot-modal');m.style.display='none';}
+
+function promptResetPw(uname){
+  const pw=prompt(`Set new password for "${uname}" (min 8 characters):`);
+  if(pw===null) return;
+  if(pw.length<8){showToast('Password must be at least 8 characters');return;}
+  const pw2=prompt('Confirm new password:');
+  if(pw!==pw2){showToast('Passwords do not match — reset cancelled');return;}
+  hashPw(pw).then(h=>{
+    const users=getUsers();
+    const u=users.find(x=>x.username===uname);
+    if(!u){showToast('User not found');return;}
+    u.hash=h;
+    saveUsers(users);
+    logAudit(`Admin reset password for "${uname}"`,me.username);
+    showToast(`Password reset for "${uname}"`);
+    renderAdmin();
+  });
+}
 
 bootstrap();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
