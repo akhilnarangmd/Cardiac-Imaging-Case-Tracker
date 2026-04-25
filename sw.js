@@ -1,5 +1,12 @@
-const CACHE = 'cardiac-v1';
-const FILES = ['/', '/index.html'];
+const CACHE = 'cardiac-v2';
+const BASE = '/Cardiac-Imaging-Case-Tracker';
+const FILES = [
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/manifest.json',
+  BASE + '/icon-192.png',
+  BASE + '/icon-512.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

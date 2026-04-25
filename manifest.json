@@ -2,20 +2,21 @@
   "name": "Cardiac Imaging Tracker",
   "short_name": "Cardiac",
   "description": "Track cardiac imaging studies by modality, patient, and conference presentation",
-  "start_url": "/",
+  "start_url": "/Cardiac-Imaging-Case-Tracker/",
+  "scope": "/Cardiac-Imaging-Case-Tracker/",
   "display": "standalone",
   "background_color": "#0C447C",
   "theme_color": "#0C447C",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/Cardiac-Imaging-Case-Tracker/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "/Cardiac-Imaging-Case-Tracker/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

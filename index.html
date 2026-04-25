@@ -8,8 +8,8 @@
 <meta name="apple-mobile-web-app-title" content="Cardiac Imaging">
 <meta name="theme-color" content="#0C447C">
 <title>Cardiac Imaging Tracker</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="/Cardiac-Imaging-Case-Tracker/manifest.json">
+<link rel="apple-touch-icon" href="/Cardiac-Imaging-Case-Tracker/icon-192.png">
 <style>
 :root {
   --blue-900:#042C53;--blue-800:#0C447C;--blue-700:#185FA5;--blue-500:#378ADD;
@@ -703,7 +703,7 @@ function promptResetPw(uname){
 }
 
 bootstrap();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/Cardiac-Imaging-Case-Tracker/sw.js', {scope: '/Cardiac-Imaging-Case-Tracker/'}).catch(()=>{});
 </script>
 </body>
 </html>
